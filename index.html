@@ -340,9 +340,9 @@
     <div class="group">
       <h2>Medidas (fijas)</h2>
       <div class="fixed-dims">
-        <strong>Pulsera: 35 cm de largo × 1,5 cm de ancho</strong>
-        <div>Área de impresión máxima: 33 cm de largo × 1,2 cm de ancho</div>
-        <div>Sangrado: 3 mm arriba, abajo y en los dos laterales</div>
+        <strong>Pulsera: 30 cm de largo × 1,5 cm de ancho</strong>
+        <div>Área de impresión máxima: 28 cm de largo × 1,2 cm de ancho</div>
+        <div>Sangrado: 3 mm arriba y abajo del tamaño de la pulsera</div>
       </div>
     </div>
 
@@ -368,7 +368,7 @@
           </div>
           <div>
             <label for="textDistance">Distancia entre laterales (cm)</label>
-            <input type="number" id="textDistance" value="2" min="0" max="33" step="0.5">
+            <input type="number" id="textDistance" value="2" min="0" max="28" step="0.5">
           </div>
         </div>
       </div>
@@ -426,7 +426,7 @@
           </div>
           <div>
             <label for="logoDistance">Distancia entre laterales (cm)</label>
-            <input type="number" id="logoDistance" value="2" min="0" max="33" step="0.5">
+            <input type="number" id="logoDistance" value="2" min="0" max="28" step="0.5">
           </div>
         </div>
       </div>
@@ -463,7 +463,7 @@
             </div>
             <div>
               <label for="combineDistance">Distancia entre pares (cm)</label>
-              <input type="number" id="combineDistance" value="2" min="0" max="33" step="0.5">
+              <input type="number" id="combineDistance" value="2" min="0" max="28" step="0.5">
             </div>
           </div>
         </div>
@@ -486,7 +486,7 @@
 
     <div class="dims" id="dimsLabel"></div>
     <div class="legend">
-      <span><span class="swatch" style="background:var(--blue-bright); opacity:.7;"></span>Área de impresión (55×2,2 cm)</span>
+      <span><span class="swatch" style="background:var(--blue-bright); opacity:.7;"></span>Área de impresión (28×1,2 cm)</span>
       <span><span class="swatch" style="background:var(--tape-red); opacity:.7;"></span>Guía de sangrado (3 mm)</span>
     </div>
 
@@ -502,7 +502,7 @@
       </div>
     </div>
 
-    <p class="note">La vista en pantalla es orientativa (depende de tu monitor). Para el <strong>tamaño real garantizado</strong>, usa "Descargar SVG" (vectorial, para imprenta o plotter), "Descargar PNG 300dpi" o "Imprimir plantilla". Los tres exportan la <strong>pulsera completa</strong>: 35,6 × 2,1 cm (pulsera de 35 × 1,5 cm ya con los 3 mm de sangrado incluidos arriba, abajo y en los dos laterales). "Distancia entre laterales / entre pares" es el hueco libre entre el borde de un elemento (o par) y el siguiente, no entre sus centros.</p>
+    <p class="note">La vista en pantalla es orientativa (depende de tu monitor). Para el <strong>tamaño real garantizado</strong>, usa "Descargar SVG" (vectorial, para imprenta o plotter), "Descargar PNG 300dpi" o "Imprimir plantilla". Los tres exportan la <strong>pulsera completa</strong>: 30 × 2,1 cm (pulsera de 30 × 1,5 cm ya con los 3 mm de sangrado incluidos arriba y abajo). "Distancia entre laterales / entre pares" es el hueco libre entre el borde de un elemento (o par) y el siguiente, no entre sus centros.</p>
 
     <div class="actions">
       <label for="paperSize" style="align-self:center; margin:0 4px 0 0; color:var(--dim);">Papel:</label>
@@ -521,15 +521,24 @@
 <svg id="measureSvg" style="position:absolute; width:0; height:0; overflow:hidden; visibility:hidden;" aria-hidden="true"></svg>
 
 <script>
+// --- AYUDA TEMPORAL DE DIAGNÓSTICO: si algo falla, lo muestra en pantalla ---
+// (se puede quitar en cuanto encontremos y arreglemos el problema)
+window.addEventListener('error', function(e){
+  var div = document.createElement('div');
+  div.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#c0392b;color:#fff;padding:10px 14px;font-family:monospace;font-size:12px;z-index:99999;white-space:pre-wrap;box-shadow:0 2px 8px rgba(0,0,0,.4);';
+  div.textContent = 'ERROR JS: ' + e.message + '  (archivo: ' + (e.filename||'?').split('/').pop() + ', línea ' + e.lineno + ', columna ' + e.colno + ')';
+  document.body.prepend(div);
+});
+
 const MM_PER_CM = 10;
 const PX_PER_MM = 96/25.4; // referencia CSS a 96dpi
 
 // Medidas fijas del producto 100SOMBREROS
-const RIBBON_LEN_CM = 35;
+const RIBBON_LEN_CM = 30;
 const RIBBON_WID_CM = 1.5;
-const PRINT_LEN_CM = 33;   // largo máximo del área de impresión
+const PRINT_LEN_CM = 28;   // largo máximo del área de impresión
 const PRINT_WID_CM = 1.2;  // ancho máximo del área de impresión
-const BLEED_CM = 0.3;      // 3 mm, en los 4 lados (a diferencia de la cinta, aquí también en los laterales)
+const BLEED_CM = 0.3;      // 3 mm, solo arriba y abajo del tamaño de la pulsera (no en los laterales)
 
 const MARGIN_X_CM = (RIBBON_LEN_CM - PRINT_LEN_CM) / 2;
 const MARGIN_Y_CM = (RIBBON_WID_CM - PRINT_WID_CM) / 2;
@@ -913,8 +922,8 @@ toggleSubopts();
 render();
 if(document.fonts && document.fonts.ready){ document.fonts.ready.then(render); }
 
-// ---------- archivo de descarga: pulsera completa, sangrado incluido en los 4 lados ----------
-const EXPORT_LEN_CM = RIBBON_LEN_CM + 2*BLEED_CM;   // 35.6 — 35 cm de pulsera + 3mm en cada lateral
+// ---------- archivo de descarga: pulsera completa, sangrado incluido solo arriba y abajo ----------
+const EXPORT_LEN_CM = RIBBON_LEN_CM;                // 30 — sin sangrado en los extremos
 const EXPORT_WID_CM = RIBBON_WID_CM + 2*BLEED_CM;   // 2.1  — 1.5 cm de pulsera + 3mm arriba + 3mm abajo
 
 function buildExportSVG(){
@@ -938,8 +947,8 @@ function buildExportSVG(){
   svg.appendChild(bg);
 
   // (sin líneas de guía: el archivo descargado va limpio, sin marcas de sangrado ni de área de impresión)
-  // el sangrado desplaza el origen en los dos ejes, ya que aquí también hay sangrado lateral
-  const pxMm = bleedMm + MARGIN_X_CM*MM_PER_CM;
+  // el sangrado solo desplaza el origen en el eje Y (arriba/abajo); no hay sangrado lateral
+  const pxMm = MARGIN_X_CM*MM_PER_CM;
   const pyMm = bleedMm + MARGIN_Y_CM*MM_PER_CM;
   const pwMm = PRINT_LEN_CM*MM_PER_CM;
   const phMm = PRINT_WID_CM*MM_PER_CM;
@@ -947,6 +956,7 @@ function buildExportSVG(){
   appendDesignElements(svg, pxMm, pwMm, pyMm + phMm/2);
   return svg;
 }
+
 
 $('btnSvg').addEventListener('click', ()=>{
   const svg = buildExportSVG();
